@@ -4,6 +4,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 
 type Request struct {
 	Filename string `json:"filename"`
-	Region   string `json:"region"`
 }
 
 type Response struct {
@@ -24,31 +24,47 @@ type Response struct {
 	Body       string            `json:"body,omitempty"`
 }
 
+var (
+	key, secret, bucket, region string
+	ErrNoFilename               = errors.New("no filename provided")
+)
+
+func init() {
+	key = os.Getenv("SPACES_KEY")
+	if key == "" {
+		panic("no key provided")
+	}
+	secret = os.Getenv("SPACES_SECRET")
+	if secret == "" {
+		panic("no secret provided")
+	}
+	bucket = os.Getenv("BUCKET")
+	if bucket == "" {
+		panic("no bucket provided")
+	}
+	region = os.Getenv("Region")
+	if region == "" {
+		panic("no region provided")
+	}
+}
+
 func Main(in Request) (*Response, error) {
-	key := os.Getenv("SPACES_KEY")
-	secret := os.Getenv("SPACES_SECRET")
-	bucket := os.Getenv("BUCKET")
-
 	if in.Filename == "" {
-		fmt.Println("No Filename Entered")
+		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
-	if in.Region == "" {
-		fmt.Println("No Region Entered")
-	}
-
-	region, err := checkRegion(in.Region)
+	reg, err := checkRegion(region)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(key, secret, ""),
-		Endpoint:    aws.String("https://" + region + ".digitaloceanspaces.com"),
+		Endpoint:    aws.String("https://" + reg + ".digitaloceanspaces.com"),
 		Region:      aws.String("us-east-1"),
 	}
 
 	sess := session.New(config)
-	url, err := UploadURL(sess, bucket, in.Filename)
+	url, err := uploadURL(sess, bucket, in.Filename)
 	if err != nil {
 		fmt.Println("Error retrieving URL: ", err)
 	}
@@ -58,7 +74,7 @@ func Main(in Request) (*Response, error) {
 	}, nil
 }
 
-func UploadURL(sess *session.Session, bucket string, filename string) (string, error) {
+func uploadURL(sess *session.Session, bucket string, filename string) (string, error) {
 	client := s3.New(sess)
 	req, _ := client.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(bucket),
@@ -83,7 +99,7 @@ func checkRegion(region string) (string, error) {
 	} else if region == "Singapore" || region == "singapore" || region == "sgp1" {
 		region = "sgp1"
 	} else {
-		return "", errors.New("Invalid Region Given.")
+		return "", errors.New("invalid region given")
 	}
 	return region, nil
 }
