@@ -1,5 +1,5 @@
 // export SPACES_KEY=XXXXXXXX && export SPACES_SECRET=XXXXXXXXXXXXX
-package main
+package presign
 
 import (
 	"errors"
@@ -16,6 +16,7 @@ import (
 
 type Request struct {
 	Filename string `json:"filename"`
+	Type     string `json:"type"`
 }
 
 type Response struct {
@@ -25,8 +26,9 @@ type Response struct {
 }
 
 var (
-	key, secret, bucket, region string
-	ErrNoFilename               = errors.New("no filename provided")
+	key, secret, bucket, region, url string
+	ErrNoFilename                    = errors.New("no filename provided")
+	ErrNoReq                         = errors.New("no request type provided")
 )
 
 func init() {
@@ -55,6 +57,7 @@ func Main(in Request) (*Response, error) {
 	reg, err := checkRegion(region)
 	if err != nil {
 		fmt.Println(err)
+		return &Response{StatusCode: http.StatusBadRequest}, err
 	}
 
 	config := &aws.Config{
@@ -64,9 +67,19 @@ func Main(in Request) (*Response, error) {
 	}
 
 	sess := session.New(config)
-	url, err := uploadURL(sess, bucket, in.Filename)
-	if err != nil {
-		fmt.Println("Error retrieving URL: ", err)
+
+	if in.Type == "PUT" {
+		url, err = uploadURL(sess, bucket, in.Filename)
+		if err != nil {
+			return &Response{StatusCode: http.StatusBadRequest}, err
+		}
+	} else if in.Type == "GET" {
+		url, err = downloadURL(sess, bucket, in.Filename)
+		if err != nil {
+			return &Response{StatusCode: http.StatusBadRequest}, err
+		}
+	} else {
+		return &Response{StatusCode: http.StatusBadRequest}, ErrNoReq
 	}
 
 	return &Response{
@@ -80,7 +93,20 @@ func uploadURL(sess *session.Session, bucket string, filename string) (string, e
 		Bucket: aws.String(bucket),
 		Key:    aws.String(filename),
 	})
-	url, err := req.Presign(10 * time.Minute)
+	url, err := req.Presign(5 * time.Minute)
+	if err != nil {
+		return "", err
+	}
+	return url, nil
+}
+
+func downloadURL(sess *session.Session, bucket string, filename string) (string, error) {
+	client := s3.New(sess)
+	req, _ := client.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(filename),
+	})
+	url, err := req.Presign(5 * time.Minute)
 	if err != nil {
 		return "", err
 	}
