@@ -128,5 +128,8 @@ func checkRegion(region string) (string, error) {
 	return region, nil
 }
 
+// To get a url:
+// curl -X PUT -H 'Content-Type: application/json' {your-DO-app-url} -d '{"filename":"{filename}", "type":"GET or PUT"}'
+
 // Once you get the url outputed: run this command in terminal
-// curl -X PUT -d 'The contents of the file.' "url"
+// curl -X PUT -d 'The contents of the file.' "{url}"
