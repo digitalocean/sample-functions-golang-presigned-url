@@ -53,10 +53,10 @@ func init() {
 func Main(in Request) (*Response, error) {
 	in.Filename = "new.txt"
 	in.Type = "PUT"
+
 	if in.Filename == "" {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
-\
 	reg, err := checkRegion(region)
 	if err != nil {
 		return &Response{StatusCode: http.StatusBadRequest}, err
