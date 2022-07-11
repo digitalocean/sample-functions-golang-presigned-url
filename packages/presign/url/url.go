@@ -1,5 +1,5 @@
 // export SPACES_KEY=XXXXXXXX && export SPACES_SECRET=XXXXXXXXXXXXX
-package presign
+package main
 
 import (
 	"errors"
