@@ -1,4 +1,3 @@
-// export SPACES_KEY=XXXXXXXX && export SPACES_SECRET=XXXXXXXXXXXXX
 package main
 
 import (
@@ -51,9 +50,6 @@ func init() {
 }
 
 func Main(in Request) (*Response, error) {
-	in.Filename = "new.txt"
-	in.Type = "PUT"
-
 	if in.Filename == "" {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
@@ -133,7 +129,4 @@ func checkRegion(region string) (string, error) {
 }
 
 // Once you get the url outputed: run this command in terminal
-//curl -X PUT \
-//-H "Content-Type: text" \
-//-d "The contents of the file." \
-// enter presigned url here in "" : "https://slack.nyc3.digitaloceanspaces.com/"
+// curl -X PUT -d 'The contents of the file.' "url"
