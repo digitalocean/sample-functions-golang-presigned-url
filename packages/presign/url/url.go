@@ -50,6 +50,8 @@ func init() {
 }
 
 func Main(in Request) (*Response, error) {
+	in.Filename = "new-file.txt"
+	in.Type = "PUT"
 	if in.Filename == "" {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
@@ -131,5 +133,5 @@ func checkRegion(region string) (string, error) {
 // To get a url:
 // curl -X PUT -H 'Content-Type: application/json' {your-DO-app-url} -d '{"filename":"{filename}", "type":"GET or PUT"}'
 
-// Once you get the url outputed: run this command in terminal
+// To Upload or Download the file:
 // curl -X PUT -d 'The contents of the file.' "{url}"
