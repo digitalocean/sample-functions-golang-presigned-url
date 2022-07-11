@@ -44,19 +44,21 @@ func init() {
 	if bucket == "" {
 		panic("no bucket provided")
 	}
-	region = os.Getenv("Region")
+	region = os.Getenv("REGION")
 	if region == "" {
 		panic("no region provided")
 	}
 }
 
 func Main(in Request) (*Response, error) {
+	in.Filename = "new.txt"
+	in.Type = "PUT"
 	if in.Filename == "" {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
+\
 	reg, err := checkRegion(region)
 	if err != nil {
-		fmt.Println(err)
 		return &Response{StatusCode: http.StatusBadRequest}, err
 	}
 
