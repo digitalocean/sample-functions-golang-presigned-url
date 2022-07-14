@@ -14,24 +14,33 @@ import (
 )
 
 type Request struct {
+	// Filename is the name of the file that will be uploaded or downloaded.
 	Filename string `json:"filename"`
-	Type     string `json:"type"`
+	// Type is a presigned request type to "GET" or "PUT" an object.
+	Type string `json:"type"`
 }
 
 type Response struct {
-	StatusCode int               `json:"statusCode,omitempty"`
-	Headers    map[string]string `json:"headers,omitempty"`
-	Body       string            `json:"body,omitempty"`
+	// StatusCode is the http code that will be returned back to the user.
+	StatusCode int `json:"statusCode,omitempty"`
+	// Headers is the information about the type of data being returned back.
+	Headers map[string]string `json:"headers,omitempty"`
+	// Body will contain the presigned url to upload or download files.
+	Body string `json:"body,omitempty"`
 }
 
 var (
 	key, secret, bucket, region string
-	ErrNoFilename               = errors.New("no filename provided")
-	ErrNoReq                    = errors.New("no request type provided")
+	// ErrNoFilename will return an error if no filename is provided by the user.
+	ErrNoFilename = errors.New("no filename provided")
+	// ErrNoFilename will return an error if no request type is provided by the user.
+	ErrNoReq = errors.New("no request type provided")
 )
 
 const (
+	// RequestTypeGet is the presigned request type to download a file.
 	RequestTypeGet = "GET"
+	// RequestTypePUT is the presigned request type to upload a file.
 	RequestTypePut = "PUT"
 )
 
@@ -54,6 +63,8 @@ func init() {
 	}
 }
 
+// Main Function configures a client using the key, secret, and region provided and returns a presigned
+// url to upload a file or download a file from a DigitalOcean Space.
 func Main(in Request) (*Response, error) {
 	if in.Filename == "" {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
@@ -114,9 +125,3 @@ func downloadURL(sess *session.Session, bucket string, filename string) (string,
 	}
 	return url, nil
 }
-
-// To get a url:
-// curl -X PUT -H 'Content-Type: application/json' {your-DO-app-url} -d '{"filename":"{filename}", "type":"GET or PUT"}'
-
-// To Upload or Download the file:
-// curl -X PUT -d 'The contents of the file.' "{url}"
