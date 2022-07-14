@@ -56,8 +56,7 @@ func init() {
 
 func Main(in Request) (*Response, error) {
 	if in.Filename == "" {
-		//return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
-		in.Filename = "new-file.txt"
+		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
 
 	config := &aws.Config{
@@ -68,9 +67,6 @@ func Main(in Request) (*Response, error) {
 
 	sess := session.New(config)
 
-	if in.Type == "" {
-		in.Type = "PUT"
-	}
 	var url string
 	var err error
 	switch in.Type {
