@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+// Request takes in the user's input for the filename they want and if the type is a GET or PUT.
 type Request struct {
 	// Filename is the name of the file that will be uploaded or downloaded.
 	Filename string `json:"filename"`
@@ -20,6 +21,7 @@ type Request struct {
 	Type string `json:"type"`
 }
 
+// Response returns back the http code, type of data, and the presigned url to the user.
 type Response struct {
 	// StatusCode is the http code that will be returned back to the user.
 	StatusCode int `json:"statusCode,omitempty"`
@@ -63,7 +65,7 @@ func init() {
 	}
 }
 
-// Main Function configures a client using the key, secret, and region provided and returns a presigned
+// Main configures a client using the key, secret, and region provided and returns a presigned
 // url to upload a file or download a file from a DigitalOcean Space.
 func Main(in Request) (*Response, error) {
 	if in.Filename == "" {
