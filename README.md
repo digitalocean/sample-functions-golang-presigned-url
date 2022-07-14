@@ -32,12 +32,22 @@ Deployed functions ('doctl sls fn get <funcName> --url' for URL):
 ```
 
 ## Using the Function
-### To get a url:
+
+```bash
+doctl serverless functions invoke presign/url -p filename:new-file.txt type:GET
+```
+```json
+{
+  "body": "{presigned url}"
+}
+```
+
+### To get a presigned url using curl:
 ```
 curl -X PUT -H 'Content-Type: application/json' {your-DO-app-url} -d '{"filename":"{filename}", "type":"GET or PUT"}'
 ```
 
-### To Upload or Download the file:
+### To Upload or Download a file using curl:
 ```
 curl -X PUT -d 'The contents of the file.' "{url}"
 ```
