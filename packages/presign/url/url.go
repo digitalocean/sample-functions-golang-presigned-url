@@ -25,9 +25,14 @@ type Response struct {
 }
 
 var (
-	key, secret, bucket, region, url string
-	ErrNoFilename                    = errors.New("no filename provided")
-	ErrNoReq                         = errors.New("no request type provided")
+	key, secret, bucket, region string
+	ErrNoFilename               = errors.New("no filename provided")
+	ErrNoReq                    = errors.New("no request type provided")
+)
+
+const (
+	RequestTypeGet = "GET"
+	RequestTypePut = "PUT"
 )
 
 func init() {
@@ -50,40 +55,41 @@ func init() {
 }
 
 func Main(in Request) (*Response, error) {
-	in.Filename = "new-file.txt"
-	in.Type = "PUT"
 	if in.Filename == "" {
-		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
-	}
-	reg, err := checkRegion(region)
-	if err != nil {
-		return &Response{StatusCode: http.StatusBadRequest}, err
+		//return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
+		in.Filename = "new-file.txt"
 	}
 
 	config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(key, secret, ""),
-		Endpoint:    aws.String("https://" + reg + ".digitaloceanspaces.com"),
-		Region:      aws.String("us-east-1"),
+		Endpoint:    aws.String(fmt.Sprintf("%s.digitaloceanspaces.com:443", region)),
+		Region:      aws.String(region),
 	}
 
 	sess := session.New(config)
 
-	if in.Type == "PUT" {
-		url, err = uploadURL(sess, bucket, in.Filename)
-		if err != nil {
-			return &Response{StatusCode: http.StatusBadRequest}, err
-		}
-	} else if in.Type == "GET" {
+	if in.Type == "" {
+		in.Type = "PUT"
+	}
+	var url string
+	var err error
+	switch in.Type {
+	case RequestTypeGet:
 		url, err = downloadURL(sess, bucket, in.Filename)
 		if err != nil {
 			return &Response{StatusCode: http.StatusBadRequest}, err
 		}
-	} else {
+	case RequestTypePut:
+		url, err = uploadURL(sess, bucket, in.Filename)
+		if err != nil {
+			return &Response{StatusCode: http.StatusBadRequest}, err
+		}
+	default:
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoReq
 	}
 
 	return &Response{
-		Body: fmt.Sprintf("The presigned URL: %s", url),
+		Body: url,
 	}, nil
 }
 
@@ -111,23 +117,6 @@ func downloadURL(sess *session.Session, bucket string, filename string) (string,
 		return "", err
 	}
 	return url, nil
-}
-
-func checkRegion(region string) (string, error) {
-	if region == "San Francisco" || region == "san francisco" || region == "sfo3" {
-		region = "sfo3"
-	} else if region == "Frankfurt" || region == "frankfurt" || region == "fra1" {
-		region = "fra1"
-	} else if region == "Amsterdam" || region == "amsterdam" || region == "ams3" {
-		region = "ams3"
-	} else if region == "New York" || region == "new york" || region == "nyc3" {
-		region = "nyc3"
-	} else if region == "Singapore" || region == "singapore" || region == "sgp1" {
-		region = "sgp1"
-	} else {
-		return "", errors.New("invalid region given")
-	}
-	return region, nil
 }
 
 // To get a url:
