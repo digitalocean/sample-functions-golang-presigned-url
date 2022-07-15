@@ -19,6 +19,8 @@ type Request struct {
 	Filename string `json:"filename"`
 	// Type is a presigned request type to "GET" or "PUT" an object.
 	Type string `json:"type"`
+	// Duration is the duration in which the presigned url will last.
+	Duration string `json:"duration"`
 }
 
 // Response returns back the http code, type of data, and the presigned url to the user.
@@ -37,6 +39,8 @@ var (
 	ErrNoFilename = errors.New("no filename provided")
 	// ErrNoFilename will return an error if no request type is provided by the user.
 	ErrNoReq = errors.New("no request type provided")
+	// ErrNoDuration will return an error if no duration is provided by the user.
+	ErrNoDuration = errors.New("no duration provided")
 )
 
 const (
@@ -72,6 +76,11 @@ func Main(in Request) (*Response, error) {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
 
+	duration, err := time.ParseDuration(in.Duration)
+	if err != nil {
+		return &Response{StatusCode: http.StatusBadRequest}, ErrNoDuration
+	}
+
 	config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(key, secret, ""),
 		Endpoint:    aws.String(fmt.Sprintf("%s.digitaloceanspaces.com:443", region)),
@@ -84,12 +93,12 @@ func Main(in Request) (*Response, error) {
 	var err error
 	switch in.Type {
 	case RequestTypeGet:
-		url, err = downloadURL(sess, bucket, in.Filename)
+		url, err = downloadURL(sess, bucket, in.Filename, duration)
 		if err != nil {
 			return &Response{StatusCode: http.StatusBadRequest}, err
 		}
 	case RequestTypePut:
-		url, err = uploadURL(sess, bucket, in.Filename)
+		url, err = uploadURL(sess, bucket, in.Filename, duration)
 		if err != nil {
 			return &Response{StatusCode: http.StatusBadRequest}, err
 		}
@@ -102,26 +111,26 @@ func Main(in Request) (*Response, error) {
 	}, nil
 }
 
-func uploadURL(sess *session.Session, bucket string, filename string) (string, error) {
+func uploadURL(sess *session.Session, bucket string, filename string, duration tiime.Duration) (string, error) {
 	client := s3.New(sess)
 	req, _ := client.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(filename),
 	})
-	url, err := req.Presign(5 * time.Minute)
+	url, err := req.Presign(duration)
 	if err != nil {
 		return "", err
 	}
 	return url, nil
 }
 
-func downloadURL(sess *session.Session, bucket string, filename string) (string, error) {
+func downloadURL(sess *session.Session, bucket string, filename string, duration tiime.Duration) (string, error) {
 	client := s3.New(sess)
 	req, _ := client.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(filename),
 	})
-	url, err := req.Presign(5 * time.Minute)
+	url, err := req.Presign(duration)
 	if err != nil {
 		return "", err
 	}
