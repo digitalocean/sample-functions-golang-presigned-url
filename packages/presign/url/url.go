@@ -38,9 +38,11 @@ var (
 	// ErrNoFilename will return an error if no filename is provided by the user.
 	ErrNoFilename = errors.New("no filename provided")
 	// ErrNoFilename will return an error if no request type is provided by the user.
-	ErrNoReq = errors.New("no request type provided")
+	ErrNoRequest = errors.New("no request type provided")
 	// ErrNoDuration will return an error if no duration is provided by the user.
 	ErrNoDuration = errors.New("no duration provided")
+	// ErrNegativeDuration will return an error if a negative duration is provided by the user.
+	ErrNegativeDuration = errors.New("negative duration provided")
 )
 
 const (
@@ -72,6 +74,7 @@ func init() {
 // Main configures a client using the key, secret, and region provided and returns a presigned
 // url to upload a file or download a file from a DigitalOcean Space.
 func Main(in Request) (*Response, error) {
+	var url string
 	if in.Filename == "" {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoFilename
 	}
@@ -80,17 +83,17 @@ func Main(in Request) (*Response, error) {
 	if err != nil {
 		return &Response{StatusCode: http.StatusBadRequest}, ErrNoDuration
 	}
+	if duration < 0 {
+		return &Response{StatusCode: http.StatusBadRequest}, ErrNegativeDuration
+	}
 
 	config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(key, secret, ""),
 		Endpoint:    aws.String(fmt.Sprintf("%s.digitaloceanspaces.com:443", region)),
 		Region:      aws.String(region),
 	}
-
 	sess := session.New(config)
 
-	var url string
-	var err error
 	switch in.Type {
 	case RequestTypeGet:
 		url, err = downloadURL(sess, bucket, in.Filename, duration)
@@ -103,7 +106,7 @@ func Main(in Request) (*Response, error) {
 			return &Response{StatusCode: http.StatusBadRequest}, err
 		}
 	default:
-		return &Response{StatusCode: http.StatusBadRequest}, ErrNoReq
+		return &Response{StatusCode: http.StatusBadRequest}, ErrNoRequest
 	}
 
 	return &Response{
@@ -111,7 +114,7 @@ func Main(in Request) (*Response, error) {
 	}, nil
 }
 
-func uploadURL(sess *session.Session, bucket string, filename string, duration tiime.Duration) (string, error) {
+func uploadURL(sess *session.Session, bucket string, filename string, duration time.Duration) (string, error) {
 	client := s3.New(sess)
 	req, _ := client.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(bucket),
@@ -124,7 +127,7 @@ func uploadURL(sess *session.Session, bucket string, filename string, duration t
 	return url, nil
 }
 
-func downloadURL(sess *session.Session, bucket string, filename string, duration tiime.Duration) (string, error) {
+func downloadURL(sess *session.Session, bucket string, filename string, duration time.Duration) (string, error) {
 	client := s3.New(sess)
 	req, _ := client.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
