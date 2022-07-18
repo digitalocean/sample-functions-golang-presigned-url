@@ -1,0 +1,14 @@
+spec:
+  alerts:
+  - rules: DEPLOYMENT_FAILED
+  - rules: DOMAIN_FAILED
+  functions:
+  - github:
+      branch: main
+      deploy_on_push: true
+      repo: digitalocean/sample-functions-golang-url
+    name: url-api
+    routes:
+    - path: /
+    source_dir: /
+  name: url
