@@ -6,7 +6,7 @@ spec:
   - github:
       branch: main
       deploy_on_push: true
-      repo: digitalocean/sample-functions-golang-url
+      repo: digitalocean/sample-functions-golang-presigned-url
     name: url-api
     routes:
     - path: /
