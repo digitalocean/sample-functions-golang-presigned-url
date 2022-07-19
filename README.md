@@ -16,13 +16,13 @@ Documentation is available at https://docs.digitalocean.com/products/functions.
 
 ```bash
 # clone this repo
-git clone git@github.com:digitalocean/sample-functions-golang-url.git
+git clone git@github.com:digitalocean/sample-functions-golang-presigned-url.git
 ```
 
 ```
 # deploy the project, using a remote build so that compiled executable matched runtime environment
-> doctl serverless deploy sample-functions-golang-url --remote-build
-Deploying 'sample-functions-golang-url'
+> doctl serverless deploy sample-functions-golang-presigned-url --remote-build
+Deploying 'sample-functions-golang-presigned-url'
   to namespace 'fn-...'
   on host 'https://faas-...'
 Submitted action 'url' for remote building and deployment in runtime go:default (id: ...)
