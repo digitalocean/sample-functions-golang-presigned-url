@@ -110,7 +110,7 @@ func Main(in Request) (*Response, error) {
 	}
 
 	return &Response{
-		StatusCode: http.StatusAccepted,
+		StatusCode: http.StatusOK,
 		Body:       url,
 	}, nil
 }
