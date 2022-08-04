@@ -16,7 +16,7 @@ Documentation is available at https://docs.digitalocean.com/products/functions.
 
 ```bash
 # clone this repo
-git clone git@github.com:digitalocean/sample-functions-golang-presigned-url.git
+git clone https://github.com/digitalocean/sample-functions-golang-presigned-url
 ```
 
 ```
